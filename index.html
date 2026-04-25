@@ -3,17 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuel Monitor System</title>
+    <title>Fuel Inventory Monitor</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://jsdelivr.net" rel="stylesheet">
     <style>
         :root { --dispense: #dc3545; --restock: #198754; }
-        body { background: #e9ecef; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .main-card { background: #fff; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 480px; overflow: hidden; }
+        body { 
+            background: #e9ecef; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            margin: 0;
+        }
+        .main-card { 
+            background: #fff; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+            width: 100%; 
+            max-width: 480px; 
+            overflow: hidden;
+        }
         .header { background: #212529; color: white; padding: 25px; text-align: center; }
-        .balance-val { color: #00ff41; font-size: 3rem; font-weight: bold; margin: 0; }
+        .balance-val { color: #00ff41; font-size: 3.2rem; font-weight: bold; margin: 0; }
         .toggle-box { background: #f8f9fa; padding: 15px; display: flex; justify-content: center; border-bottom: 1px solid #eee; }
         .form-body { padding: 30px; }
         .hidden { display: none; }
+        .form-control { border-radius: 8px; margin-bottom: 12px; padding: 12px; }
+        .btn-submit { padding: 12px; font-weight: bold; border-radius: 8px; text-transform: uppercase; transition: 0.3s; color: white; }
+        
+        /* Toggle Styling */
         .btn-check:checked + .btn-out { background: var(--dispense) !important; color: white !important; }
         .btn-check:checked + .btn-in { background: var(--restock) !important; color: white !important; }
     </style>
@@ -21,77 +41,101 @@
 <body>
 
 <div class="main-card">
+    <!-- Header: Balance Display -->
     <div class="header">
         <small class="text-muted text-uppercase">Fuel Inventory Balance</small>
         <h1 class="balance-val" id="totalDisplay">---</h1>
         <small>LITERS REMAINING</small>
     </div>
 
+    <!-- Toggle: In vs Out -->
     <div class="toggle-box">
         <div class="btn-group w-75">
             <input type="radio" class="btn-check" name="mode" id="modeOut" checked onchange="updateUI()">
             <label class="btn btn-outline-secondary btn-out" for="modeOut">DISPENSE</label>
+
             <input type="radio" class="btn-check" name="mode" id="modeIn" onchange="updateUI()">
             <label class="btn btn-outline-secondary btn-in" for="modeIn">RESTOCK</label>
         </div>
     </div>
 
+    <!-- Form Section -->
     <div class="form-body">
         <form id="fuelForm">
             <label class="small text-muted mb-1">Transaction Date</label>
-            <input type="date" id="date" class="form-control mb-3" required>
+            <input type="date" id="date" class="form-control" required>
 
+            <!-- DISPENSE ARRANGEMENT -->
             <div id="dispenseSection">
-                <input type="text" id="plate" class="form-control mb-2" placeholder="Plate Number">
-                <input type="text" id="driver" class="form-control mb-2" placeholder="Driver Name">
-                <input type="number" id="litersOut" class="form-control mb-2" placeholder="Liters Dispensed" step="0.01">
-                <input type="text" id="receivedByOut" class="form-control mb-2" placeholder="Received By">
+                <input type="text" id="plate" class="form-control" placeholder="Plate Number">
+                <input type="text" id="driver" class="form-control" placeholder="Driver Name">
+                <input type="number" id="litersOut" class="form-control" placeholder="Number of Liters" step="0.01">
+                <input type="text" id="receivedByOut" class="form-control" placeholder="Received By">
             </div>
 
+            <!-- RESTOCK ARRANGEMENT -->
             <div id="restockSection" class="hidden">
-                <input type="number" id="litersIn" class="form-control mb-2" placeholder="Liters Received" step="0.01">
-                <input type="text" id="deliveredBy" class="form-control mb-2" placeholder="Delivered By">
-                <input type="text" id="receivedByIn" class="form-control mb-2" placeholder="Received By">
+                <input type="number" id="litersIn" class="form-control" placeholder="Number of Liters Received" step="0.01">
+                <input type="text" id="deliveredBy" class="form-control" placeholder="Delivered By">
+                <input type="text" id="receivedByIn" class="form-control" placeholder="Received By">
             </div>
 
-            <button type="submit" id="btnSubmit" class="btn btn-danger w-100 mt-3 py-2 fw-bold">CONFIRM DISPENSE</button>
+            <button type="submit" id="btnSubmit" class="btn btn-danger w-100 btn-submit mt-3">Confirm Dispense</button>
         </form>
         <div id="feedback" class="text-center mt-3 small text-secondary">System Ready</div>
     </div>
 </div>
 
 <script>
-    // REPLACE with your actual Google Script URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0AAfUHnPB9mAWbrlu1XvrRStIvV_yKQN0La5yrhdKa5_fH2ZdOhgFmWQs5yNfAFsc/exec"; 
+    // 1. MUST PASTE YOUR GOOGLE DEPLOYMENT URL HERE
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0AAfUHnPB9mAWbrlu1XvrRStIvV_yKQN0La5yrhdKa5_fH2ZdOhgFmWQs5yNfAFsc/exec";
 
+    // Set default date
     document.getElementById('date').valueAsDate = new Date();
 
+    // Toggle UI Logic
     function updateUI() {
         const isOut = document.getElementById('modeOut').checked;
-        document.getElementById('dispenseSection').classList.toggle('hidden', !isOut);
-        document.getElementById('restockSection').classList.toggle('hidden', isOut);
+        const outSec = document.getElementById('dispenseSection');
+        const inSec = document.getElementById('restockSection');
         const btn = document.getElementById('btnSubmit');
-        btn.className = isOut ? "btn btn-danger w-100 mt-3 py-2 fw-bold" : "btn btn-success w-100 mt-3 py-2 fw-bold";
-        btn.innerText = isOut ? "CONFIRM DISPENSE" : "CONFIRM RESTOCK";
+
+        if (isOut) {
+            outSec.classList.remove('hidden');
+            inSec.classList.add('hidden');
+            btn.className = "btn btn-danger w-100 btn-submit mt-3";
+            btn.innerText = "Confirm Dispense";
+        } else {
+            outSec.classList.add('hidden');
+            inSec.classList.remove('hidden');
+            btn.className = "btn btn-success w-100 btn-submit mt-3";
+            btn.innerText = "Confirm Restock";
+        }
     }
 
-    // Loads current balance from Google Sheet
+    // Load initial balance
     function loadBalance() {
         fetch(SCRIPT_URL)
             .then(res => res.json())
-            .then(data => { document.getElementById('totalDisplay').innerText = data.balance; })
-            .catch(err => console.error("Load Error:", err));
+            .then(data => {
+                document.getElementById('totalDisplay').innerText = data.balance;
+            })
+            .catch(err => {
+                console.error("Initial load error:", err);
+                document.getElementById('feedback').innerText = "Unable to load balance.";
+            });
     }
 
     window.onload = loadBalance;
 
+    // Form Submission
     document.getElementById('fuelForm').onsubmit = function(e) {
         e.preventDefault();
         const isOut = document.getElementById('modeOut').checked;
         const feedback = document.getElementById('feedback');
         const btn = document.getElementById('btnSubmit');
         
-        feedback.innerText = "Syncing with Google Sheets...";
+        feedback.innerText = "🔄 Syncing with Google Sheets...";
         btn.disabled = true;
         
         const payload = {
@@ -104,27 +148,33 @@
             deliveredBy: isOut ? "" : document.getElementById('deliveredBy').value
         };
 
-        // Use text/plain to bypass CORS preflight
+        // Text/Plain header is used to avoid CORS preflight errors with Google Apps Script
         fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors', 
+            mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         })
         .then(res => res.json())
         .then(data => {
-            feedback.innerText = "✅ Success!";
-            document.getElementById('totalDisplay').innerText = data.balance;
-            document.getElementById('fuelForm').reset();
-            document.getElementById('date').valueAsDate = new Date();
-            btn.disabled = false;
+            if(data.result === "success") {
+                document.getElementById('totalDisplay').innerText = data.balance;
+                feedback.innerText = "✅ Logged Successfully!";
+                document.getElementById('fuelForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+            } else {
+                feedback.innerText = "❌ Script Error: " + data.error;
+            }
         })
         .catch(err => {
-            console.error("Submission Error:", err);
-            feedback.innerText = "❌ Error: Sheet did not respond.";
+            console.error('Error:', err);
+            feedback.innerText = "❌ Error connecting to server.";
+        })
+        .finally(() => {
             btn.disabled = false;
         });
     };
 </script>
+
 </body>
 </html>
