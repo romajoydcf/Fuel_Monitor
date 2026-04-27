@@ -4,27 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fuel Inventory Monitor</title>
-    <!-- Bootstrap 5 CSS -->
     <link href="https://jsdelivr.net" rel="stylesheet">
     <style>
         :root { --dispense: #dc3545; --restock: #198754; }
-        body { 
-            background: #e9ecef; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            margin: 0;
-        }
-        .main-card { 
-            background: #fff; 
-            border-radius: 20px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
-            width: 100%; 
-            max-width: 480px; 
-            overflow: hidden;
-        }
+        body { background: #e9ecef; font-family: 'Segoe UI', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .main-card { background: #fff; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 480px; overflow: hidden; }
         .header { background: #212529; color: white; padding: 25px; text-align: center; }
         .balance-val { color: #00ff41; font-size: 3.2rem; font-weight: bold; margin: 0; }
         .toggle-box { background: #f8f9fa; padding: 15px; display: flex; justify-content: center; border-bottom: 1px solid #eee; }
@@ -32,8 +16,6 @@
         .hidden { display: none; }
         .form-control { border-radius: 8px; margin-bottom: 12px; padding: 12px; }
         .btn-submit { padding: 12px; font-weight: bold; border-radius: 8px; text-transform: uppercase; transition: 0.3s; color: white; }
-        
-        /* Toggle Styling */
         .btn-check:checked + .btn-out { background: var(--dispense) !important; color: white !important; border-color: var(--dispense) !important; }
         .btn-check:checked + .btn-in { background: var(--restock) !important; color: white !important; border-color: var(--restock) !important; }
     </style>
@@ -41,40 +23,33 @@
 <body>
 
 <div class="main-card">
-    <!-- Header: Balance Display -->
     <div class="header">
         <small class="text-muted text-uppercase">Fuel Inventory Balance</small>
         <h1 class="balance-val" id="totalDisplay">---</h1>
         <small>LITERS REMAINING</small>
     </div>
 
-    <!-- Toggle Switch -->
     <div class="toggle-box">
         <div class="btn-group w-75">
             <input type="radio" class="btn-check" name="mode" id="modeOut" checked onchange="updateUI()">
             <label class="btn btn-outline-secondary btn-out" for="modeOut">DISPENSE</label>
-
             <input type="radio" class="btn-check" name="mode" id="modeIn" onchange="updateUI()">
             <label class="btn btn-outline-secondary btn-in" for="modeIn">RESTOCK</label>
         </div>
     </div>
 
-    <!-- Form Section -->
     <div class="form-body">
         <form id="fuelForm">
             <label class="small text-muted mb-1">Transaction Date</label>
             <input type="date" id="date" class="form-control" required>
 
-            <!-- DISPENSE ARRANGEMENT -->
             <div id="dispenseSection">
                 <input type="text" id="plate" class="form-control" placeholder="Plate Number">
                 <input type="text" id="driver" class="form-control" placeholder="Driver Name">
                 <input type="number" id="litersOut" class="form-control" placeholder="Liters to Dispense" step="0.01">
-                <input type="text" id="receivedByOut" class="form-control" placeholder="Received By">
                 <input type="text" id="issuedBy" class="form-control" placeholder="Issued By">
             </div>
 
-            <!-- RESTOCK ARRANGEMENT -->
             <div id="restockSection" class="hidden">
                 <input type="number" id="litersIn" class="form-control" placeholder="Liters Received" step="0.01">
                 <input type="text" id="deliveredBy" class="form-control" placeholder="Delivered By">
@@ -88,48 +63,27 @@
 </div>
 
 <script>
-    // 1. PASTE YOUR NEW DEPLOYED GOOGLE WEB APP URL HERE
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5GiUYxleC-GcP29PZQIyh2wYREwAyG2y21ohjzTkbrnU3xbQCHYY_1cOcrsUjOzyr/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSInpwimzrQK98j5HH28qxxpVlHrM1_buoWgcMp34VSH1ejfrUeoWG-Fay2VVvdlbK/exec"; // PASTE NEW URL HERE
 
-    // Set default date to today
     document.getElementById('date').valueAsDate = new Date();
 
-    // Toggle UI Logic
     function updateUI() {
         const isOut = document.getElementById('modeOut').checked;
-        const outSec = document.getElementById('dispenseSection');
-        const inSec = document.getElementById('restockSection');
+        document.getElementById('dispenseSection').classList.toggle('hidden', !isOut);
+        document.getElementById('restockSection').classList.toggle('hidden', isOut);
         const btn = document.getElementById('btnSubmit');
-
-        if (isOut) {
-            outSec.classList.remove('hidden');
-            inSec.classList.add('hidden');
-            btn.className = "btn btn-danger w-100 btn-submit mt-3";
-            btn.innerText = "Confirm Dispense";
-        } else {
-            outSec.classList.add('hidden');
-            inSec.classList.remove('hidden');
-            btn.className = "btn btn-success w-100 btn-submit mt-3";
-            btn.innerText = "Confirm Restock";
-        }
+        btn.className = isOut ? "btn btn-danger w-100 btn-submit mt-3" : "btn btn-success w-100 btn-submit mt-3";
+        btn.innerText = isOut ? "Confirm Dispense" : "Confirm Restock";
     }
 
-    // Load current balance on page load
     function loadBalance() {
-        fetch(SCRIPT_URL)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('totalDisplay').innerText = data.balance;
-            })
-            .catch(err => {
-                console.error("Initial load error:", err);
-                document.getElementById('feedback').innerText = "Unable to load balance.";
-            });
+        fetch(SCRIPT_URL).then(res => res.json()).then(data => {
+            document.getElementById('totalDisplay').innerText = data.balance;
+        }).catch(err => console.error("Load error:", err));
     }
 
     window.onload = loadBalance;
 
-    // Form Submission
     document.getElementById('fuelForm').onsubmit = function(e) {
         e.preventDefault();
         const isOut = document.getElementById('modeOut').checked;
@@ -139,19 +93,22 @@
         feedback.innerText = "🔄 Syncing with Google Sheets...";
         btn.disabled = true;
         
+        // Generate full Date + Time Timestamp
+        const now = new Date();
+        const fullTimestamp = now.toLocaleDateString() + " " + now.toLocaleTimeString();
+        
         const payload = {
             date: document.getElementById('date').value,
-            timestamp: new Date().toLocaleTimeString(), // Auto-generated timestamp
+            timestamp: fullTimestamp, 
             type: isOut ? "OUT" : "IN",
             plate: isOut ? document.getElementById('plate').value : "",
             driver: isOut ? document.getElementById('driver').value : "",
             liters: isOut ? document.getElementById('litersOut').value : document.getElementById('litersIn').value,
-            receivedBy: isOut ? document.getElementById('receivedByOut').value : document.getElementById('receivedByIn').value,
+            receivedBy: isOut ? "" : document.getElementById('receivedByIn').value,
             deliveredBy: isOut ? "" : document.getElementById('deliveredBy').value,
             issuedBy: isOut ? document.getElementById('issuedBy').value : ""
         };
 
-        // fetch logic using text/plain to avoid CORS issues
         fetch(SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -164,20 +121,12 @@
                 feedback.innerText = "✅ Logged Successfully!";
                 document.getElementById('fuelForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
-                updateUI(); // Resets visual state to default
-            } else {
-                feedback.innerText = "❌ Script Error: " + data.error;
-            }
+                updateUI();
+            } else { feedback.innerText = "❌ Error: " + data.error; }
         })
-        .catch(err => {
-            console.error('Error:', err);
-            feedback.innerText = "❌ Connection Failed.";
-        })
-        .finally(() => {
-            btn.disabled = false;
-        });
+        .catch(err => { feedback.innerText = "❌ Connection Failed."; })
+        .finally(() => { btn.disabled = false; });
     };
 </script>
-
 </body>
 </html>
