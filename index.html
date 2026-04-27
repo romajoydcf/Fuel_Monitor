@@ -34,8 +34,8 @@
         .btn-submit { padding: 12px; font-weight: bold; border-radius: 8px; text-transform: uppercase; transition: 0.3s; color: white; }
         
         /* Toggle Styling */
-        .btn-check:checked + .btn-out { background: var(--dispense) !important; color: white !important; }
-        .btn-check:checked + .btn-in { background: var(--restock) !important; color: white !important; }
+        .btn-check:checked + .btn-out { background: var(--dispense) !important; color: white !important; border-color: var(--dispense) !important; }
+        .btn-check:checked + .btn-in { background: var(--restock) !important; color: white !important; border-color: var(--restock) !important; }
     </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
         <small>LITERS REMAINING</small>
     </div>
 
-    <!-- Toggle: In vs Out -->
+    <!-- Toggle Switch -->
     <div class="toggle-box">
         <div class="btn-group w-75">
             <input type="radio" class="btn-check" name="mode" id="modeOut" checked onchange="updateUI()">
@@ -69,13 +69,14 @@
             <div id="dispenseSection">
                 <input type="text" id="plate" class="form-control" placeholder="Plate Number">
                 <input type="text" id="driver" class="form-control" placeholder="Driver Name">
-                <input type="number" id="litersOut" class="form-control" placeholder="Number of Liters" step="0.01">
+                <input type="number" id="litersOut" class="form-control" placeholder="Liters to Dispense" step="0.01">
                 <input type="text" id="receivedByOut" class="form-control" placeholder="Received By">
+                <input type="text" id="issuedBy" class="form-control" placeholder="Issued By">
             </div>
 
             <!-- RESTOCK ARRANGEMENT -->
             <div id="restockSection" class="hidden">
-                <input type="number" id="litersIn" class="form-control" placeholder="Number of Liters Received" step="0.01">
+                <input type="number" id="litersIn" class="form-control" placeholder="Liters Received" step="0.01">
                 <input type="text" id="deliveredBy" class="form-control" placeholder="Delivered By">
                 <input type="text" id="receivedByIn" class="form-control" placeholder="Received By">
             </div>
@@ -87,10 +88,10 @@
 </div>
 
 <script>
-    // 1. MUST PASTE YOUR GOOGLE DEPLOYMENT URL HERE
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0AAfUHnPB9mAWbrlu1XvrRStIvV_yKQN0La5yrhdKa5_fH2ZdOhgFmWQs5yNfAFsc/exec";
+    // 1. PASTE YOUR NEW DEPLOYED GOOGLE WEB APP URL HERE
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx5GiUYxleC-GcP29PZQIyh2wYREwAyG2y21ohjzTkbrnU3xbQCHYY_1cOcrsUjOzyr/exec";
 
-    // Set default date
+    // Set default date to today
     document.getElementById('date').valueAsDate = new Date();
 
     // Toggle UI Logic
@@ -113,7 +114,7 @@
         }
     }
 
-    // Load initial balance
+    // Load current balance on page load
     function loadBalance() {
         fetch(SCRIPT_URL)
             .then(res => res.json())
@@ -140,18 +141,19 @@
         
         const payload = {
             date: document.getElementById('date').value,
+            timestamp: new Date().toLocaleTimeString(), // Auto-generated timestamp
             type: isOut ? "OUT" : "IN",
             plate: isOut ? document.getElementById('plate').value : "",
             driver: isOut ? document.getElementById('driver').value : "",
             liters: isOut ? document.getElementById('litersOut').value : document.getElementById('litersIn').value,
             receivedBy: isOut ? document.getElementById('receivedByOut').value : document.getElementById('receivedByIn').value,
-            deliveredBy: isOut ? "" : document.getElementById('deliveredBy').value
+            deliveredBy: isOut ? "" : document.getElementById('deliveredBy').value,
+            issuedBy: isOut ? document.getElementById('issuedBy').value : ""
         };
 
-        // Text/Plain header is used to avoid CORS preflight errors with Google Apps Script
+        // fetch logic using text/plain to avoid CORS issues
         fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
         })
@@ -162,13 +164,14 @@
                 feedback.innerText = "✅ Logged Successfully!";
                 document.getElementById('fuelForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
+                updateUI(); // Resets visual state to default
             } else {
                 feedback.innerText = "❌ Script Error: " + data.error;
             }
         })
         .catch(err => {
             console.error('Error:', err);
-            feedback.innerText = "❌ Error connecting to server.";
+            feedback.innerText = "❌ Connection Failed.";
         })
         .finally(() => {
             btn.disabled = false;
